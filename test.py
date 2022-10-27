@@ -4,37 +4,72 @@ import behavior as bt
 import rospy
 import time
 from std_msgs.msg import Float64
+from std_msgs.msg import String
 
-position = 5.0
 
-root = bt.Root("root")
+class Test:   
+    def __init__(self):
+        # constants
+        self.rate = 2
+        #self.delta = 1.0 / self.rate
+        #self.speed = 0.8
 
-action = bt.Action("Message1")
-action2 = bt.Action("Message2")
-condition = bt.Condition("condition")
+        # variables
+        #self.position = 0.0
 
-root.nodes.append(condition)
-root.nodes.append(action2)
 
-condition.nodes.append(action)
+    # create nodes for behaivor tree
+    root = bt.Root("root")
 
-bt.display_tree(root)
+    move1 = bt.Move("move forward")
+    move2 = bt.Move("move backward")
+    condition = bt.Condition("condition", False)
 
-# while True:
-#     print("------------------")
-#     root.activate()
-#     time.sleep(3)
 
-def publisher(pos):
-    pub = rospy.Publisher('cusub_common/motor_controlls/pid/drive/setpoint', Float64, queue_size=1)
-    rospy.init_node('state_machine')
-    rate = rospy.Rate(0.5)
-    while not rospy.is_shutdown():
-        pos += 1.0
-        pub.publish(pos)
-        rate.sleep()
+    # arrange nodes
+    #root.nodes.append(condition)
+    root.nodes.append(move1)
+    root.nodes.append(move2)
 
-try:
-    publisher(position)
-except rospy.ROSInterruptException:
-    pass
+
+    # display behaivor tree
+    bt.display_tree(root)
+
+
+    # while True:
+    #     print("------------------")
+    #     root.activate()
+    #     time.sleep(3)
+
+
+    # set up publisher
+    def publisher(self):
+        # create node and publisher
+        rospy.init_node('state_machine')
+        pub = rospy.Publisher('/leviathan/cusub_common/motor_controllers/pid/drive/setpoint', Float64, queue_size=1)
+        rospy.Subscriber("/leviathan/cusub_common/motor_controllers/pid/drive/state", Float64, self.callback)
+
+        self.move1.publisher = pub
+        self.move2.publisher = pub
+
+        self.move1.destination = 3.0
+        self.move2.destination = -3.0
+        
+        # set rate
+        rate = rospy.Rate(self.rate)
+        
+        # main loop
+        while not rospy.is_shutdown():
+
+            self.root.activate()
+            # wait
+            rate.sleep()
+
+    def callback(self, data):
+        self.move1.position = round(data.data, 1)
+        self.move2.position = round(data.data, 1)
+
+
+
+test = Test()
+test.publisher()
