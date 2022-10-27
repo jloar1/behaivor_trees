@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
 import enum
+import rospy
+import time
+from std_msgs.msg import Float64
+from std_msgs.msg import String
 
 class Status(enum.Enum):
     
@@ -106,6 +110,28 @@ class Action(Node):
     def activate(self):
         print(self.name)
         return Status.SUCCESS
+
+class Move(Node):
+
+    def __init__(self, name, position = 0.0, destination = 0.0):
+        self.name = name
+        self.position = position
+        self.destination = destination
+        self.publisher = None
+
+    def activate(self):
+        if self.publisher != None:
+            if self.position == self.destination:
+                print(self.name + " Robot is already at position " + str(self.position))
+                return Status.SUCCESS
+            else:
+                self.publisher.publish(self.destination)
+                print(self.name + " is moving the robot towards " + str(self.destination) + "(current position is " + str(self.position) + ")")
+                return Status.RUNNING
+        else:
+            return Status.FAILURE
+
+
 
 def display_tree(root):
     print(root.name)
