@@ -1,1 +1,1 @@
-Behavior trees for CU RoboSub. (I haven't added comments yet so it may be difficult to read)
+Behavior trees in Python. Desinged for CU RoboSub, but could be modified to work with other stuff.
